@@ -1,26 +1,37 @@
-URL Shortener API
+# URL Shortener API
+
 A REST API built with Spring Boot that allows users to shorten URLs, resolve them, and track analytics. Secured with JWT authentication and backed by PostgreSQL (Neon).
 
-Tech Stack
+---
 
-Java, Spring Boot
-Spring Security, JWT (jjwt)
-Spring Data JPA, Hibernate
-PostgreSQL (Neon)
-Lombok, Maven
+# Tech Stack
 
+- Java
+- Spring Boot
+- Spring Security
+- JWT (jjwt)
+- Spring Data JPA
+- Hibernate
+- PostgreSQL (Neon)
+- Lombok
+- Maven
 
-Features
+---
 
-User registration and login with JWT authentication
-URL shortening with MD5 hashing and collision handling
-Short URL resolution with HTTP 302 redirect
-Click count tracking on every redirect
-Per-user analytics dashboard
-Input validation and global exception handling
+# Features
 
+- User registration and login with JWT authentication
+- URL shortening with MD5 hashing and collision handling
+- Short URL resolution with HTTP 302 redirect
+- Click count tracking on every redirect
+- Per-user analytics dashboard
+- Input validation and global exception handling
 
-Project Structure
+---
+
+# Project Structure
+
+```bash
 src/main/java/com/example/URLshortener/
 ├── auth/
 │   ├── User.java
@@ -35,6 +46,7 @@ src/main/java/com/example/URLshortener/
 │       ├── RegisterRequest.java
 │       ├── LoginRequest.java
 │       └── JwtResponse.java
+│
 ├── url/
 │   ├── ShortUrl.java
 │   ├── UrlRepository.java
@@ -43,123 +55,141 @@ src/main/java/com/example/URLshortener/
 │   └── dto/
 │       ├── ShortenRequestDto.java
 │       └── ShortenResponseDto.java
+│
 ├── analytics/
 │   ├── AnalyticsController.java
 │   └── AnalyticsResponseDto.java
+│
 └── exceptions/
     ├── UserAlreadyExistsException.java
     └── GlobalExceptionHandler.java
+```
 
-Getting Started
-Prerequisites
+---
 
-Java 17+
-Maven
-A Neon PostgreSQL account (free at neon.tech)
+# Getting Started
 
-Environment Variables
-Set the following environment variables before running:
-VariableDescriptionurlShortner_db_urlNeon PostgreSQL JDBC URLDATABASE_USERNAMEDatabase usernameURLshortner_Database_PasswordDatabase passwordJWT_SECRETSecret key for signing JWT tokens (min 32 characters)
-Run The App
-bash./mvnw spring-boot:run
-The app starts on http://localhost:8080.
-Tables are created automatically by Hibernate on first run.
+## Prerequisites
 
-API Endpoints
-Auth
-Register
-POST /auth/signup
+Make sure you have the following installed:
 
-Body:
-{
-    "name": "John Doe",
-    "email": "john@example.com",
-    "password": "password123"
-}
+- Java 17+ (used Java 21 here)
+- Maven
+- A Neon PostgreSQL account
 
-Response: 201 Created
-{
-    "token": "eyJhbG...",
-    "email": "john@example.com",
-    "name": "John Doe"
-}
-Login
-POST /auth/login
+---
 
-Body:
-{
-    "email": "john@example.com",
-    "password": "password123"
-}
+# Maven Dependencies
 
-Response: 200 OK
-{
-    "token": "eyJhbG...",
-    "email": "john@example.com",
-    "name": "John Doe"
-}
+I had to add the JWT dependencies manually because some `jjwt` libraries are not included by default when creating a Spring Boot project with Spring Initializr.
 
-URL Shortening
-Shorten a URL
-POST /short
-Authorization: Bearer <token>
+```xml
+<dependencies>
 
-Body:
-{
-    "longUrl": "https://www.example.com/some/very/long/url"
-}
+    <!-- JWT API -->
+    <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-api</artifactId>
+        <version>0.11.5</version>
+    </dependency>
 
-Response: 201 Created
-{
-    "shortCode": "aa747c",
-    "longUrl": "https://www.example.com/some/very/long/url",
-    "createdBy": "John Doe",
-    "createdAt": "2026-05-19T18:10:48Z",
-    "expiryDate": null
-}
-Resolve a Short URL
-GET /{shortCode}
+    <!-- JWT Implementation -->
+    <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-impl</artifactId>
+        <version>0.11.5</version>
+        <scope>runtime</scope>
+    </dependency>
 
-Response: 302 Found
-Redirects browser to the original URL
-No authentication required. Anyone with the short link can use it.
+    <!-- JWT Jackson Serializer -->
+    <dependency>
+        <groupId>io.jsonwebtoken</groupId>
+        <artifactId>jjwt-jackson</artifactId>
+        <version>0.11.5</version>
+        <scope>runtime</scope>
+    </dependency>
 
-Analytics
-Get Your URL Analytics
-GET /analytics/me
-Authorization: Bearer <token>
+</dependencies>
+```
 
-Response: 200 OK
-[
-    {
-        "shortCode": "aa747c",
-        "longUrl": "https://www.example.com/some/very/long/url",
-        "clickCount": 5,
-        "createdAt": "2026-05-19T18:10:48Z"
-    }
-]
+These dependencies are used for:
 
-How URL Shortening Works
+- Generating JWT tokens
+- Validating JWT tokens
+- Parsing JWT claims
+- JSON serialization/deserialization for JWT payloads
 
-User sends a long URL
-If the URL was already shortened, the existing short code is returned
-Otherwise, the URL is hashed using MD5 and the first 6 characters are taken as the short code
-If a collision is detected (short code already exists), a counter is appended and incremented until a unique code is found
-The short URL is saved to the database and returned
+---
+
+# Environment Variables
+
+You need to set the following environment variables before running the application:
+
+| Variable | Description |
+|---|---|
+| `urlShortner_db_url` | Neon PostgreSQL JDBC URL |
+| `DATABASE_USERNAME` | Database username |
+| `URLshortner_Database_Password` | Database password |
+| `JWT_SECRET` | Secret key for signing JWT tokens (minimum 32 characters) |
 
 
-Security
+tip - restart your ide after setting the environment variables
 
-Passwords are hashed using BCrypt before storage
-JWT tokens expire after 30 minutes
-All endpoints except /auth/** and GET /{shortCode} require a valid JWT token
-Credentials and secrets are managed via environment variables
+---
 
+# Run The App
 
-Future Improvements
+```bash
+mvnw spring-boot:run
+```
 
-Custom short codes chosen by the user
-URL expiry date support
-AI-powered URL summarization
-Rate limiting per user
-Browser extension frontend
+The application starts on:
+
+```bash
+http://localhost:8080
+```
+
+Hibernate automatically creates the required database tables on first run.
+
+---
+
+# How URL Shortening Works
+
+1. User sends a long URL
+2. If the URL was already shortened, the existing short code is returned
+3. Otherwise:
+   - The URL is hashed using MD5
+   - The first 6 characters are used as the short code
+4. If a collision occurs:
+   - A counter is appended
+   - The counter increments until a unique code is generated
+5. The short URL is saved to the database
+6. The API returns the generated short code
+
+---
+
+# Security
+
+- Passwords are hashed using BCrypt before storage
+- JWT tokens expire after 30 minutes
+- All endpoints except:
+  - `/auth/**`
+  - `GET /{shortCode}`
+  
+  require valid JWT authentication
+- Credentials and secrets are managed using environment variables
+
+---
+
+# Future Improvements
+
+- Custom short codes
+- URL expiry date support
+- AI-powered URL summarisation
+- Rate limiting per user
+- Browser extension frontend
+
+---
+
+# Author
+Gauri Mishra
